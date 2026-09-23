@@ -1,0 +1,13 @@
+.git
+.gitignore
+node_modules
+android
+ios
+dist
+.vscode
+certs
+.env
+.env.*
+data/store.json
+deploy/out
+*.log

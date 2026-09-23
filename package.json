@@ -1,0 +1,51 @@
+{
+  "name": "golah",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "GoLah! — find nearby campaign addresses in Singapore, built for web first and Capacitor mobile later.",
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:debug": "concurrently -n api,web -c cyan,magenta \"npm run dev:api:debug\" \"npm run dev:web\"",
+    "dev:web": "vite",
+    "dev:api": "node server/index.js --no-https",
+    "dev:api:debug": "node --inspect --watch server/index.js --no-https",
+    "build": "tsc --noEmit && vite build",
+    "build:mobile": "tsc --noEmit && vite build",
+    "cap:sync": "npx cap sync",
+    "android:open": "npx cap open android",
+    "android:bundle": "powershell -File deploy/build-android.ps1",
+    "ios:open": "npx cap open ios",
+    "preview": "vite preview",
+    "start": "node server/index.js --no-https"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/geolocation": "^8.2.2",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/push-notifications": "^8.1.2",
+    "@vis.gl/react-google-maps": "^1.5.5",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "nodemailer": "^10.0.10",
+    "papaparse": "^5.5.3",
+    "pdftk": "^0.0.0-rc.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.2",
+    "uuid": "^11.1.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
+    "@types/papaparse": "^5.3.16",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.4"
+  }
+}

@@ -1,0 +1,12 @@
+node_modules
+dist
+android
+ios
+.git
+.vscode
+certs
+*.md
+.env
+.env.*
+data/store.json
+deploy/out
