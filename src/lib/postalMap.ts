@@ -1,3 +1,5 @@
+import { apiUrl } from "./api";
+
 export type PostalMapStatus = {
   path: string;
   count: number;
@@ -13,7 +15,7 @@ export function getPostalMapStatus() {
 
 /** Load the server postal-code map summary every time the web app starts. */
 export async function loadPostalMapOnStartup(): Promise<PostalMapStatus> {
-  const res = await fetch("/api/postal-map");
+  const res = await fetch(apiUrl("/api/postal-map"));
   if (!res.ok) {
     status = {
       path: "",

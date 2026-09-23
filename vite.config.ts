@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => {
   const port = https ? Number(env.HTTPS_PORT || 443) : 5174;
 
   return {
+    base: process.env.VITE_BASE || "/",
     plugins: [react()],
     server: {
       host: true,

@@ -122,6 +122,14 @@ Signed-in users can favourite **campaigns** (☆ next to the campaign chip) and 
 
 Admin can view every login email and **Export CSV** for marketing. Set SMTP env vars so OTPs are emailed; without SMTP the code is printed in the API log (and shown in the app during local testing).
 
+## GitHub Pages
+
+The public UI is published from `main` to **https://fengcloudsg.github.io/golah/**.
+
+GitHub Pages is static hosting only. The map, GPS, and navigation still work. Campaign lists, admin CSV, OTP sign-in, and push need the Express API (Cloud Run or `npm start`). After you have an API URL, set the `VITE_API_BASE` repository secret and redeploy.
+
+Add `https://fengcloudsg.github.io/golah/*` to the Google Maps API key HTTP referrer list. Store the key as the `VITE_GOOGLE_MAPS_API_KEY` repository secret (never commit `.env`).
+
 ## Deploy (Cloud Run, Play Store, App Store)
 
 See **[deploy/README.md](deploy/README.md)** for:
