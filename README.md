@@ -11,7 +11,7 @@ Web app to find Singapore campaign addresses near you, navigate in Google Maps, 
 5. **Favourites** — signed-in users save campaigns and stall locations to their account
 6. **Multiple campaigns** can be live; users toggle which ones to include. Admin sets an inclusive **start and end date** (Singapore calendar days); the public map only shows campaigns that are active and include today.
 7. **Push notifications** on web, Android, and iOS: campaign start/last-day alerts, plus Admin **Notify users**
-8. **Ads** slot for Google AdSense (web) and AdMob / Apple Search Ads (mobile later)
+8. **Ads** slot for Google AdSense (web); AdMob later on mobile
 9. Email **OTP sign-in**, marketing consent, and Admin-managed **Terms & Conditions** (HTML)
 10. Cloud advice: **Firebase / Google Cloud** in Singapore (`asia-southeast1`) — see in-app **Cloud** page
 

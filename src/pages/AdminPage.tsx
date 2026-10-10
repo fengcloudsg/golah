@@ -20,8 +20,8 @@ import { formatRing, hasCoords } from "../lib/geo";
 import { getPostalMapStatus, loadPostalMapOnStartup } from "../lib/postalMap";
 import { parseCampaignCsv } from "../lib/csv";
 import { ADMIN_PIN_KEY } from "../lib/favorites";
-import type { Campaign } from "../types";
-import { PRESET_RINGS_M } from "../types";
+import type { AdsSettings, Campaign } from "../types";
+import { DEFAULT_ADS, PRESET_RINGS_M } from "../types";
 
 export function AdminPage() {
   const [pin, setPin] = useState(() => sessionStorage.getItem(ADMIN_PIN_KEY) || "");
@@ -45,6 +45,7 @@ export function AdminPage() {
   const [users, setUsers] = useState<
     { id: string; email: string; createdAt: string; lastLoginAt: string; marketingConsent: boolean }[]
   >([]);
+  const [ads, setAds] = useState<AdsSettings>(DEFAULT_ADS);
 
   useEffect(() => {
     loadPostalMapOnStartup()
@@ -70,6 +71,7 @@ export function AdminPage() {
     if (data.settings) {
       setRings(data.settings.ringsMeters);
       setDefaultRing(data.settings.defaultRingMeters);
+      if (data.settings.ads) setAds({ ...DEFAULT_ADS, ...data.settings.ads });
     }
     setTargetId((current) => {
       const preferred = keepId || current;
@@ -340,6 +342,56 @@ export function AdminPage() {
             onClick={() => void persistRings()}
           >
             Save rings
+          </button>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3>Ads</h3>
+        <p className="muted">The public slot serves Google Ads (AdSense when a publisher id is set).</p>
+        <label className="check-row">
+          <input
+            type="checkbox"
+            checked={ads.googleAds}
+            onChange={(e) => setAds((prev) => ({ ...prev, googleAds: e.target.checked }))}
+          />
+          Google Ads
+        </label>
+        <label htmlFor="adsense-client">AdSense client</label>
+        <input
+          id="adsense-client"
+          value={ads.adsenseClient}
+          onChange={(e) => setAds((prev) => ({ ...prev, adsenseClient: e.target.value.trim() }))}
+          placeholder="ca-pub-xxxxxxxxxxxxxxxx"
+          autoComplete="off"
+        />
+        <label htmlFor="adsense-slot">AdSense slot</label>
+        <input
+          id="adsense-slot"
+          value={ads.adsenseSlot}
+          onChange={(e) => setAds((prev) => ({ ...prev, adsenseSlot: e.target.value.trim() }))}
+          placeholder="1234567890"
+          autoComplete="off"
+        />
+        <div className="actions">
+          <button
+            className="primary"
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                const { settings } = await saveSettings(pin, { ads });
+                if (settings.ads) setAds({ ...DEFAULT_ADS, ...settings.ads });
+                setStatus("Saved Google Ads slot.");
+              } catch (err) {
+                setStatus(err instanceof Error ? err.message : "Could not save ads");
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Save ads
           </button>
         </div>
       </div>

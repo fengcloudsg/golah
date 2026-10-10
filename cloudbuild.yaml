@@ -6,6 +6,7 @@ substitutions:
   _SERVICE: golah
   _MAPS_KEY: ""
   _API_BASE: ""
+  _ADSENSE_CLIENT: "ca-pub-6244756659144944"
   _IMAGE_TAG: latest
 
 timeout: 1800s
@@ -22,6 +23,8 @@ steps:
       - VITE_GOOGLE_MAPS_API_KEY=${_MAPS_KEY}
       - --build-arg
       - VITE_API_BASE=${_API_BASE}
+      - --build-arg
+      - VITE_ADSENSE_CLIENT=${_ADSENSE_CLIENT}
       - .
 
 images:

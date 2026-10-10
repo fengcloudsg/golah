@@ -19,7 +19,7 @@ body { background: var(--bg); color: var(--ink); }
 .app-shell {
   min-height: 100%;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto 1fr;
 }
 
 .topbar {
@@ -133,15 +133,44 @@ label { display: block; font-size: 0.85rem; font-weight: 600; margin: 10px 0 6px
 .ad-slot {
   margin: 8px 16px 12px;
   min-height: 72px;
-  border: 1px dashed #99f6e4;
+  border: 1px solid #99f6e4;
   border-radius: 12px;
   display: grid;
-  place-items: center;
+  grid-template-columns: 1fr;
+  gap: 8px;
   color: var(--muted);
   background: #ecfdf5;
   font-size: 0.8rem;
-  text-align: center;
+  text-align: left;
   padding: 8px;
+}
+.ad-unit {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 72px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  text-decoration: none;
+  border: 1px solid #ccfbf1;
+}
+.ad-unit strong { font-size: 0.95rem; }
+.ad-unit-house span:last-child { color: var(--muted); font-size: 0.8rem; }
+.ad-kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin: 8px 0;
 }
 
 .banner { padding: 10px 14px; border-radius: 12px; background: #fff7ed; color: #9a3412; margin-bottom: 10px; }

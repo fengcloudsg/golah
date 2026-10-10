@@ -53,6 +53,10 @@ export function fetchCampaigns(): Promise<{ campaigns: Campaign[]; settings: App
   return fetch(apiUrl("/api/campaigns")).then(json);
 }
 
+export function fetchSettings(): Promise<{ settings: AppSettings }> {
+  return fetch(apiUrl("/api/settings")).then(json);
+}
+
 export function adminLogin(pin: string) {
   return fetch(apiUrl("/api/admin/login"), {
     method: "POST",
@@ -140,7 +144,7 @@ export function notifyCampaign(pin: string, id: string, body?: string) {
 
 export function saveSettings(
   pin: string,
-  settings: { ringsMeters: number[]; defaultRingMeters: number },
+  settings: { ringsMeters?: number[]; defaultRingMeters?: number; ads?: AppSettings["ads"] },
 ) {
   return fetch(apiUrl("/api/admin/settings"), {
     method: "PATCH",

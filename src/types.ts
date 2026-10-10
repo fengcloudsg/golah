@@ -42,9 +42,22 @@ export type UserFavorites = {
   campaigns: Pick<Campaign, "id" | "name" | "description" | "startsOn" | "endsOn" | "active">[];
 };
 
+export type AdsSettings = {
+  googleAds: boolean;
+  adsenseClient: string;
+  adsenseSlot: string;
+};
+
 export type AppSettings = {
   ringsMeters: number[];
   defaultRingMeters: number;
+  ads?: AdsSettings;
+};
+
+export const DEFAULT_ADS: AdsSettings = {
+  googleAds: true,
+  adsenseClient: "ca-pub-6244756659144944",
+  adsenseSlot: "",
 };
 
 export const PRESET_RINGS_M = [100, 200, 500, 1000, 2000, 5000, 10_000, 20_000, 50_000] as const;

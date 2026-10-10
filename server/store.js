@@ -20,10 +20,39 @@ export const STORE_PATH = process.env.STORE_PATH || join(DATA_DIR, "store.json")
 
 let cache = null;
 
+export function defaultAds() {
+  return {
+    googleAds: true,
+    adsenseClient: String(process.env.ADSENSE_CLIENT || process.env.VITE_ADSENSE_CLIENT || "ca-pub-6244756659144944").trim(),
+    adsenseSlot: String(process.env.ADSENSE_SLOT || process.env.VITE_ADSENSE_SLOT || "").trim(),
+  };
+}
+
+export function sanitizeAdsenseClient(value) {
+  const raw = String(value || "").trim();
+  return /^ca-pub-\d{8,20}$/.test(raw) ? raw : "";
+}
+
+export function sanitizeAdsenseSlot(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  return digits.length >= 6 && digits.length <= 22 ? digits : "";
+}
+
+export function normalizeAds(raw) {
+  const fallback = defaultAds();
+  const src = raw && typeof raw === "object" ? raw : {};
+  return {
+    googleAds: src.googleAds !== false,
+    adsenseClient: sanitizeAdsenseClient(src.adsenseClient || fallback.adsenseClient),
+    adsenseSlot: sanitizeAdsenseSlot(src.adsenseSlot || fallback.adsenseSlot),
+  };
+}
+
 export function defaultSettings() {
   return {
     ringsMeters: [100, 200, 500, 1000, 2000, 5000, 10_000, 20_000, 50_000],
     defaultRingMeters: 1000,
+    ads: defaultAds(),
   };
 }
 
@@ -39,6 +68,7 @@ export function normalizeSettings(raw) {
   return {
     ringsMeters,
     defaultRingMeters: ringsMeters.includes(def) ? def : ringsMeters.includes(1000) ? 1000 : ringsMeters[0],
+    ads: normalizeAds(raw?.ads ?? fallback.ads),
   };
 }
 

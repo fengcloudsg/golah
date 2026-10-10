@@ -243,6 +243,22 @@ app.get("/api/campaigns", (_req, res) => {
   });
 });
 
+app.get("/api/settings", (_req, res) => {
+  const store = loadStore();
+  res.json({ settings: store.settings });
+});
+
+app.get("/ads.txt", (_req, res) => {
+  const ads = loadStore().settings.ads || {};
+  const publisher = String(ads.adsenseClient || "").replace(/^ca-/, "");
+  const lines = [
+    "# GoLah! authorized sellers",
+    publisher ? `google.com, ${publisher}, DIRECT, f08c47fec0942fa0` : "# Add an AdSense publisher id in Admin → Ads",
+    "",
+  ];
+  res.type("text/plain").send(lines.join("\n"));
+});
+
 app.get("/api/terms", (_req, res) => {
   const store = loadStore();
   res.json({ html: store.termsHtml || defaultTermsHtml() });
@@ -634,7 +650,7 @@ const dist = join(root, "dist");
 if (existsSync(join(dist, "index.html"))) {
   app.use(express.static(dist));
   app.get(/.*/, (req, res, next) => {
-    if (req.path.startsWith("/api")) return next();
+    if (req.path.startsWith("/api") || req.path === "/ads.txt") return next();
     res.sendFile(join(dist, "index.html"));
   });
 }
@@ -642,8 +658,10 @@ if (existsSync(join(dist, "index.html"))) {
 app.patch("/api/admin/settings", requireAdmin, (req, res) => {
   const store = loadStore();
   store.settings = normalizeSettings({
+    ...store.settings,
     ringsMeters: req.body?.ringsMeters ?? store.settings.ringsMeters,
     defaultRingMeters: req.body?.defaultRingMeters ?? store.settings.defaultRingMeters,
+    ads: req.body?.ads ?? store.settings.ads,
   });
   saveStore(store);
   res.json({ settings: store.settings });

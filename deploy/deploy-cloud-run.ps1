@@ -16,6 +16,8 @@ $Service = "golah"
 $MapsKey = $env:VITE_GOOGLE_MAPS_API_KEY
 if (-not $MapsKey) { $MapsKey = "" }
 $AdminPin = if ($env:ADMIN_PIN) { $env:ADMIN_PIN } else { "golah-admin" }
+$AdsenseClient = if ($env:VITE_ADSENSE_CLIENT) { $env:VITE_ADSENSE_CLIENT } elseif ($env:ADSENSE_CLIENT) { $env:ADSENSE_CLIENT } else { "ca-pub-6244756659144944" }
+$AdsenseSlot = if ($env:VITE_ADSENSE_SLOT) { $env:VITE_ADSENSE_SLOT } elseif ($env:ADSENSE_SLOT) { $env:ADSENSE_SLOT } else { "" }
 $Repo = "$Region-docker.pkg.dev/$Project/golah"
 
 Write-Host "Enabling APIs and Artifact Registry..."
@@ -30,7 +32,7 @@ $Tag = Get-Date -Format "yyyyMMdd-HHmmss"
 $Image = "${Repo}/${Service}:${Tag}"
 Write-Host "Building $Image"
 $root = Resolve-Path (Join-Path $PSScriptRoot "..")
-gcloud builds submit $root --project $Project --quiet --config (Join-Path $root "cloudbuild.yaml") --substitutions "_MAPS_KEY=$MapsKey,_REGION=$Region,_SERVICE=$Service,_IMAGE_TAG=$Tag"
+gcloud builds submit $root --project $Project --quiet --config (Join-Path $root "cloudbuild.yaml") --substitutions "_MAPS_KEY=$MapsKey,_REGION=$Region,_SERVICE=$Service,_IMAGE_TAG=$Tag,_ADSENSE_CLIENT=$AdsenseClient"
 if ($LASTEXITCODE -ne 0) { throw "Cloud Build failed with exit code $LASTEXITCODE" }
 
 $Bucket = if ($env:GOLAH_STORE_BUCKET) { $env:GOLAH_STORE_BUCKET } else { "golah-persist-$Project" }
@@ -44,7 +46,9 @@ $RunSa = "$ProjectNumber-compute@developer.gserviceaccount.com"
 gcloud storage buckets add-iam-policy-binding "gs://$Bucket" --member="serviceAccount:$RunSa" --role="roles/storage.objectAdmin" --quiet 1>$null
 
 Write-Host "Deploying Cloud Run service $Service with durable store"
-gcloud run deploy $Service --project $Project --quiet --image $Image --region $Region --platform managed --allow-unauthenticated --port 8080 --memory 1Gi --cpu 1 --timeout 300 --execution-environment gen2 --add-volume="name=golah-data,type=cloud-storage,bucket=$Bucket" --add-volume-mount="volume=golah-data,mount-path=/var/golah" --set-env-vars "HTTPS=0,ADMIN_PIN=$AdminPin,POSTAL_MAP_PATH=data/postal-map.json,STORE_PATH=/var/golah/store.json"
+$RunEnv = "HTTPS=0,ADMIN_PIN=$AdminPin,POSTAL_MAP_PATH=data/postal-map.json,STORE_PATH=/var/golah/store.json,ADSENSE_CLIENT=$AdsenseClient"
+if ($AdsenseSlot) { $RunEnv = "$RunEnv,ADSENSE_SLOT=$AdsenseSlot" }
+gcloud run deploy $Service --project $Project --quiet --image $Image --region $Region --platform managed --allow-unauthenticated --port 8080 --memory 1Gi --cpu 1 --timeout 300 --execution-environment gen2 --add-volume="name=golah-data,type=cloud-storage,bucket=$Bucket" --add-volume-mount="volume=golah-data,mount-path=/var/golah" --set-env-vars $RunEnv
 
 Write-Host "Done. Service URL:"
 gcloud run services describe $Service --region $Region --project $Project --format="value(status.url)"
