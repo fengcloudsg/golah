@@ -148,6 +148,30 @@ label { display: block; font-size: 0.85rem; font-weight: 600; margin: 10px 0 6px
 
 .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 
+.selected-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  background: var(--card);
+  border: 2px solid #f9ab00;
+  border-radius: 16px;
+}
+.selected-bar-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.selected-bar-copy strong { font-size: 1rem; }
+.card-selected {
+  outline: 2px solid #f9ab00;
+  scroll-margin-top: 12px;
+}
+
 .you-pin {
   position: relative;
   width: 28px;

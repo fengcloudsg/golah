@@ -23,7 +23,7 @@ gcloud run deploy golah --source . --region asia-southeast1 --allow-unauthentica
 
 Add the Cloud Run URL (`https://golah-xxxxx.a.run.app/*`) to the Maps API key HTTP referrers.
 
-Campaign data is stored in the container filesystem and **resets when the revision is replaced**. Move `store.json` to Firestore before production scale.
+Campaign data, users, and favourites persist in Cloud Storage (`gs://golah-persist-PROJECT/store.json`) mounted at `/var/golah`. Deploys no longer wipe admin CSV imports. When stall counts and writers grow, move that file into Firestore documents with a geohash / S2 index — `server/store.js` is the only I/O seam.
 
 ## 2. Android Play Store (AAB)
 

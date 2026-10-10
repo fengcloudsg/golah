@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createServer as createHttpServer } from "node:http";
 import { createServer as createHttpsServer } from "node:https";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { networkInterfaces } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,13 +18,13 @@ import {
   findSessionUser,
   findUserByEmail,
   normalizeEmail,
-  pruneAuth,
   publicUser,
   readBearer,
   sanitizeTermsHtml,
   usersToCsv,
 } from "./auth.js";
 import { sendOtpEmail, smtpConfigured } from "./mail.js";
+import { extractPostal, loadStore, normalizeSettings, saveStore } from "./store.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -44,7 +44,6 @@ function loadDotEnv() {
 }
 loadDotEnv();
 const DATA_DIR = join(root, "data");
-const STORE_PATH = join(DATA_DIR, "store.json");
 const ADMIN_PIN = process.env.ADMIN_PIN || "golah-admin";
 const PORT = Number(process.env.PORT || 4174);
 const HTTPS_PORT = Number(process.env.HTTPS_PORT || 443);
@@ -71,104 +70,8 @@ function logDebug(...args) {
 /** @typedef {{ id: string; name: string; description: string; active: boolean; createdAt: string; startsOn: string; endsOn: string; locations: Location[] }} Campaign */
 /** @typedef {{ campaigns: Campaign[] }} Store */
 
-function defaultSettings() {
-  return {
-    ringsMeters: [100, 200, 500, 1000, 2000, 5000, 10_000, 20_000, 50_000],
-    defaultRingMeters: 1000,
-  };
-}
-
-function normalizeSettings(raw) {
-  const fallback = defaultSettings();
-  const rings = (Array.isArray(raw?.ringsMeters) ? raw.ringsMeters : fallback.ringsMeters)
-    .map((n) => Number(n))
-    .filter((n) => Number.isFinite(n) && n > 0 && n <= 1_000_000)
-    .map((n) => Math.round(n));
-  const unique = [...new Set(rings)].sort((a, b) => a - b);
-  const ringsMeters = unique.length ? unique : fallback.ringsMeters;
-  const def = Number(raw?.defaultRingMeters);
-  return {
-    ringsMeters,
-    defaultRingMeters: ringsMeters.includes(def) ? def : ringsMeters.includes(1000) ? 1000 : ringsMeters[0],
-  };
-}
-
 function defaultTermsHtml() {
   return DEFAULT_TERMS_HTML;
-}
-
-function emptyStore() {
-  return {
-    campaigns: [],
-    settings: defaultSettings(),
-    pushSubscriptions: [],
-    users: [],
-    sessions: [],
-    otps: [],
-    termsHtml: defaultTermsHtml(),
-  };
-}
-
-function defaultCampaignDates(createdAt) {
-  const start = ymd(createdAt) || sgToday();
-  return { startsOn: start, endsOn: addDays(start, 90) };
-}
-
-function loadStore() {
-  if (!existsSync(STORE_PATH)) return emptyStore();
-  try {
-    const store = JSON.parse(readFileSync(STORE_PATH, "utf8"));
-    store.campaigns = (store.campaigns || []).map((c) => {
-      const dates = defaultCampaignDates(c.createdAt);
-      return {
-        ...c,
-        startsOn: ymd(c.startsOn) || dates.startsOn,
-        endsOn: ymd(c.endsOn) || dates.endsOn,
-        startNotified: Boolean(c.startNotified),
-        endNotified: Boolean(c.endNotified),
-        locations: (c.locations || []).map((loc) => ({
-          ...loc,
-          stallName: String(loc.stallName || loc.address || "").trim(),
-          address: String(loc.address || "").trim(),
-          postalCode: extractPostal(loc.postalCode || loc.address || ""),
-          lat: Number.isFinite(Number(loc.lat)) ? Number(loc.lat) : null,
-          lng: Number.isFinite(Number(loc.lng)) ? Number(loc.lng) : null,
-        })),
-      };
-    });
-    store.settings = normalizeSettings(store.settings);
-    store.pushSubscriptions = Array.isArray(store.pushSubscriptions) ? store.pushSubscriptions : [];
-    store.users = Array.isArray(store.users)
-      ? store.users.map((user) => ({
-          ...user,
-          email: normalizeEmail(user.email) || String(user.email || "").trim().toLowerCase(),
-          marketingConsent: Boolean(user.marketingConsent),
-          favoriteLocations: Array.isArray(user.favoriteLocations) ? user.favoriteLocations : [],
-          favoriteCampaignIds: Array.isArray(user.favoriteCampaignIds) ? user.favoriteCampaignIds : [],
-        }))
-      : [];
-    store.sessions = Array.isArray(store.sessions) ? store.sessions : [];
-    store.otps = Array.isArray(store.otps) ? store.otps : [];
-    store.termsHtml = sanitizeTermsHtml(store.termsHtml || defaultTermsHtml()) || defaultTermsHtml();
-    pruneAuth(store);
-    return store;
-  } catch {
-    return emptyStore();
-  }
-}
-
-function saveStore(store) {
-  if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
-  writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
-}
-
-function extractPostal(text) {
-  const value = String(text ?? "");
-  const six = value.match(/\b(\d{6})\b/);
-  if (six) return six[1];
-  const digits = value.replace(/\D/g, "");
-  if (digits.length >= 4 && digits.length <= 6) return digits.padStart(6, "0");
-  return "";
 }
 
 function sleep(ms) {

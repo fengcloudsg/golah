@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { haversineKm } from "../lib/geo";
 
 export type Gps = {
   lat: number;
@@ -12,10 +13,25 @@ function isNativeApp() {
   return Boolean(cap?.isNativePlatform?.());
 }
 
+const MOVE_METERS = 25;
+const MIN_MS = 8_000;
+
 export function useGeolocation() {
   const [gps, setGps] = useState<Gps | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const lastFix = useRef<{ gps: Gps; at: number } | null>(null);
+
+  function applyFix(next: Gps) {
+    const now = Date.now();
+    const prev = lastFix.current;
+    if (prev) {
+      const meters = haversineKm(prev.gps.lat, prev.gps.lng, next.lat, next.lng) * 1000;
+      if (meters < MOVE_METERS && now - prev.at < MIN_MS) return;
+    }
+    lastFix.current = { gps: next, at: now };
+    setGps(next);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +54,7 @@ export function useGeolocation() {
                 setLoading(false);
                 return;
               }
-              setGps({
+              applyFix({
                 lat: pos.coords.latitude,
                 lng: pos.coords.longitude,
                 accuracy: pos.coords.accuracy,
@@ -64,7 +80,7 @@ export function useGeolocation() {
 
       watchId = navigator.geolocation.watchPosition(
         (pos) => {
-          setGps({
+          applyFix({
             lat: pos.coords.latitude,
             lng: pos.coords.longitude,
             accuracy: pos.coords.accuracy,

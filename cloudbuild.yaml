@@ -1,18 +1,21 @@
-# Build and deploy GoLah! to Cloud Run (Singapore).
-# gcloud builds submit --config cloudbuild.yaml --substitutions=_MAPS_KEY=YOUR_KEY,_ADMIN_PIN=YOUR_PIN
+# Build GoLah! image for Cloud Run (Singapore). Deploy is done by deploy-cloud-run.ps1
+# so the local gcloud user has Run Admin (Cloud Build SA often does not yet).
+# gcloud builds submit --config cloudbuild.yaml --substitutions=_MAPS_KEY=YOUR_KEY,_IMAGE_TAG=ts
 substitutions:
   _REGION: asia-southeast1
   _SERVICE: golah
   _MAPS_KEY: ""
-  _ADMIN_PIN: golah-admin
   _API_BASE: ""
+  _IMAGE_TAG: latest
+
+timeout: 1800s
 
 steps:
   - name: gcr.io/cloud-builders/docker
     args:
       - build
       - -t
-      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/golah/${_SERVICE}:${COMMIT_SHA}
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/golah/${_SERVICE}:${_IMAGE_TAG}
       - -t
       - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/golah/${_SERVICE}:latest
       - --build-arg
@@ -21,36 +24,8 @@ steps:
       - VITE_API_BASE=${_API_BASE}
       - .
 
-  - name: gcr.io/cloud-builders/docker
-    args:
-      - push
-      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/golah/${_SERVICE}:${COMMIT_SHA}
-
-  - name: gcr.io/cloud-builders/docker
-    args:
-      - push
-      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/golah/${_SERVICE}:latest
-
-  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: gcloud
-    args:
-      - run
-      - deploy
-      - ${_SERVICE}
-      - --image
-      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/golah/${_SERVICE}:${COMMIT_SHA}
-      - --region
-      - ${_REGION}
-      - --platform
-      - managed
-      - --allow-unauthenticated
-      - --port
-      - "8080"
-      - --set-env-vars
-      - HTTPS=0,ADMIN_PIN=${_ADMIN_PIN},POSTAL_MAP_PATH=data/postal-map.json
-
 images:
-  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/golah/${_SERVICE}:${COMMIT_SHA}
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/golah/${_SERVICE}:${_IMAGE_TAG}
   - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/golah/${_SERVICE}:latest
 
 options:

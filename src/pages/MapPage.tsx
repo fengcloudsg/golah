@@ -4,7 +4,7 @@ import { LocationList } from "../components/LocationList";
 import { useGeolocation } from "../hooks/useGeolocation";
 import { fetchCampaigns, locateAddress } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import { formatRing, hasCoords, haversineKm } from "../lib/geo";
+import { formatKm, formatRing, hasCoords, haversineKm, openGoogleMapsNav } from "../lib/geo";
 import { loadSavedLocation, saveSavedLocation } from "../lib/locationCookie";
 import type { Campaign, NearbyLocation } from "../types";
 import { PRESET_RINGS_M } from "../types";
@@ -91,6 +91,8 @@ export function MapPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [favNote, setFavNote] = useState<string | null>(null);
+  const [focusToken, setFocusToken] = useState(0);
+  const firstOrigin = useRef(false);
 
   useEffect(() => {
     fetchCampaigns()
@@ -128,6 +130,12 @@ export function MapPage() {
 
   const origin = override ?? gps ?? (useSaved ? saved : null);
 
+  useEffect(() => {
+    if (!origin || firstOrigin.current) return;
+    firstOrigin.current = true;
+    setFocusToken((n) => n + 1);
+  }, [origin]);
+
   const nearby = useMemo<NearbyLocation[]>(() => {
     if (!origin) return [];
     const maxKm = radiusM / 1000;
@@ -150,6 +158,12 @@ export function MapPage() {
     return rows.sort((a, b) => a.distanceKm - b.distanceKm);
   }, [campaigns, enabled, origin, radiusM]);
 
+  const selectedLoc = selectedId ? nearby.find((loc) => loc.id === selectedId) ?? null : null;
+  const listed = useMemo(() => {
+    if (!selectedLoc) return nearby;
+    return [selectedLoc, ...nearby.filter((loc) => loc.id !== selectedLoc.id)];
+  }, [nearby, selectedLoc]);
+
   async function onSetAddress(e: React.FormEvent) {
     e.preventDefault();
     const query = addressQuery.trim();
@@ -163,6 +177,7 @@ export function MapPage() {
         lng: found.lng,
         label: found.address || query,
       });
+      setFocusToken((n) => n + 1);
     } catch (err) {
       setLocateError(err instanceof Error ? err.message : "Could not find that address");
     } finally {
@@ -231,6 +246,7 @@ export function MapPage() {
                 setOverride(null);
                 setUseSaved(false);
                 setLocateError(null);
+                setFocusToken((n) => n + 1);
               }}
             >
               Use GPS
@@ -248,7 +264,30 @@ export function MapPage() {
         </p>
       )}
 
-      <GoogleMapView gps={origin} locations={nearby} selectedId={selectedId} onSelect={setSelectedId} />
+      <GoogleMapView
+        gps={origin}
+        locations={nearby}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        focusToken={focusToken}
+      />
+      {selectedLoc && (
+        <div className="selected-bar">
+          <div className="selected-bar-copy">
+            <strong>{selectedLoc.stallName || selectedLoc.address}</strong>
+            <span className="muted">
+              {formatKm(selectedLoc.distanceKm)} · {selectedLoc.address} · {selectedLoc.campaignName}
+            </span>
+          </div>
+          <button
+            className="primary"
+            type="button"
+            onClick={() => openGoogleMapsNav(selectedLoc, origin)}
+          >
+            Navigate in Google Maps
+          </button>
+        </div>
+      )}
       <div className="legend">
         <span>
           <i className="you" /> You
@@ -303,7 +342,7 @@ export function MapPage() {
       )}
 
       <LocationList
-        items={nearby}
+        items={listed}
         selectedId={selectedId}
         favorites={favLocationIds}
         gps={origin}

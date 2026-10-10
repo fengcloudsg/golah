@@ -1,4 +1,5 @@
-import { AdvancedMarker, APIProvider, Map, Pin } from "@vis.gl/react-google-maps";
+import { useEffect, useRef } from "react";
+import { AdvancedMarker, APIProvider, Map, Pin, useMap } from "@vis.gl/react-google-maps";
 import type { NearbyLocation } from "../types";
 import { SG_CENTER } from "../types";
 import type { Gps } from "../hooks/useGeolocation";
@@ -9,6 +10,8 @@ type Props = {
   locations: NearbyLocation[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** Increment only when the camera should jump (first lock, typed address, Use GPS). */
+  focusToken?: number;
 };
 
 function YouAreHerePin() {
@@ -26,9 +29,20 @@ function YouAreHerePin() {
   );
 }
 
-export function GoogleMapView({ gps, locations, selectedId, onSelect }: Props) {
+function Recenter({ target, token }: { target: Gps | null; token: number }) {
+  const map = useMap();
+  const applied = useRef(0);
+  useEffect(() => {
+    if (!map || !target || token === 0 || token === applied.current) return;
+    applied.current = token;
+    map.panTo({ lat: target.lat, lng: target.lng });
+  }, [map, target, token]);
+  return null;
+}
+
+export function GoogleMapView({ gps, locations, selectedId, onSelect, focusToken = 0 }: Props) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
-  const center = gps ?? SG_CENTER;
+  const home = useRef(gps ?? SG_CENTER);
   const youTitle = gps?.label || "You are here";
 
   if (!apiKey) {
@@ -56,14 +70,14 @@ export function GoogleMapView({ gps, locations, selectedId, onSelect }: Props) {
     <div className="map-wrap">
       <APIProvider apiKey={apiKey}>
         <Map
-          key={`${center.lat.toFixed(5)},${center.lng.toFixed(5)}`}
-          defaultCenter={center}
+          defaultCenter={home.current}
           defaultZoom={gps ? 15 : 11}
           gestureHandling="greedy"
           disableDefaultUI={false}
           mapId="DEMO_MAP_ID"
           style={{ width: "100%", height: "100%" }}
         >
+          <Recenter target={gps} token={focusToken} />
           {gps && (
             <AdvancedMarker position={gps} title={youTitle} zIndex={3000}>
               <YouAreHerePin />
