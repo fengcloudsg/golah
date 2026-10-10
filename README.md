@@ -38,7 +38,7 @@ npm run dev
 
 On this PC: http://127.0.0.1:5174 (or **https://127.0.0.1/** if certificates are installed)
 
-Admin is not shown in the main menu. Open it directly: `/admin` (example `https://YOUR-HOST/admin`).
+Admin is not shown in the main menu. Open the private console URL directly (it is not `/admin`).
 
 ### HTTPS (port 443)
 
@@ -95,7 +95,7 @@ Then open `chrome://inspect` and attach to the Node process, or in Cursor/VS Cod
 - App (this PC): http://127.0.0.1:5174 or https://127.0.0.1/ with certs
 - API (this PC): http://127.0.0.1:4174
 - Other devices: https://YOUR-LAN-IP/ or http://YOUR-LAN-IP:5174
-- Admin (hidden from the menu): /admin
+- Admin (hidden from the menu): private console URL, not /admin
 
 Allow location when the browser asks. Without a Maps key the GPS coordinates and list still work; the map panel explains how to add the key.
 
@@ -103,7 +103,7 @@ Sample CSV: `sample-campaign.csv`. Postal lookup JSON: `data/postal-map.json` (r
 
 ## Campaign dates and push notifications
 
-Admin `/admin` sets **Starts on** and **Ends on** for each campaign. Both dates are inclusive Singapore days. Pause/Activate still controls whether the campaign can go live; the public map only lists campaigns that are active *and* whose window includes today.
+Admin sets **Starts on** and **Ends on** for each campaign. Both dates are inclusive Singapore days. Pause/Activate still controls whether the campaign can go live; the public map only lists campaigns that are active *and* whose window includes today.
 
 Users who allow notifications receive:
 
@@ -116,7 +116,7 @@ Users who allow notifications receive:
 
 ## Accounts, favourites, and marketing emails
 
-Users sign in from **Sign in** with an email address and a 6-digit OTP. New accounts must tick the disclaimer (Terms & Conditions + marketing use of the email). The public Terms page is `/terms`; Admin edits that HTML in `/admin`.
+Users sign in from **Sign in** with an email address and a 6-digit OTP. New accounts must tick the disclaimer (Terms & Conditions + marketing use of the email). The public Terms page is `/terms`; Admin edits that HTML in the private console.
 
 Signed-in users can favourite **campaigns** (☆ next to the campaign chip) and **stall locations**. Lists live on the Favourites page and follow the account.
 

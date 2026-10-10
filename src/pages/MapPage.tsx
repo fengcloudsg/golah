@@ -5,6 +5,7 @@ import { useGeolocation } from "../hooks/useGeolocation";
 import { fetchCampaigns, locateAddress } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { formatKm, formatRing, hasCoords, haversineKm, openGoogleMapsNav } from "../lib/geo";
+import { loadEnabledCampaigns, saveEnabledCampaigns } from "../lib/enabledCampaigns";
 import { loadSavedLocation, saveSavedLocation } from "../lib/locationCookie";
 import type { Campaign, NearbyLocation } from "../types";
 import { PRESET_RINGS_M } from "../types";
@@ -85,7 +86,7 @@ export function MapPage() {
   const [locateBusy, setLocateBusy] = useState(false);
   const [locateError, setLocateError] = useState<string | null>(null);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [enabled, setEnabled] = useState<Set<string>>(new Set());
+  const [enabled, setEnabled] = useState<Set<string>>(() => new Set(loadEnabledCampaigns()));
   const [rings, setRings] = useState<number[]>([...PRESET_RINGS_M]);
   const [radiusM, setRadiusM] = useState(1000);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -98,7 +99,8 @@ export function MapPage() {
     fetchCampaigns()
       .then(({ campaigns: list, settings }) => {
         setCampaigns(list);
-        setEnabled(new Set(list.map((c) => c.id)));
+        const live = new Set(list.map((c) => c.id));
+        setEnabled(new Set(loadEnabledCampaigns().filter((id) => live.has(id))));
         const nextRings = settings?.ringsMeters?.length ? settings.ringsMeters : [...PRESET_RINGS_M];
         setRings(nextRings);
         const def = settings?.defaultRingMeters;
@@ -204,6 +206,13 @@ export function MapPage() {
     );
   }
 
+  function returnToCurrentLocation() {
+    setOverride(null);
+    setUseSaved(false);
+    setLocateError(null);
+    setFocusToken((n) => n + 1);
+  }
+
   return (
     <div className="page">
       {loading && !origin && <div className="banner">Getting your GPS location…</div>}
@@ -270,6 +279,7 @@ export function MapPage() {
         selectedId={selectedId}
         onSelect={setSelectedId}
         focusToken={focusToken}
+        onReturnToLocation={returnToCurrentLocation}
       />
       {selectedLoc && (
         <div className="selected-bar">
@@ -327,6 +337,7 @@ export function MapPage() {
                 const next = new Set(prev);
                 if (next.has(c.id)) next.delete(c.id);
                 else next.add(c.id);
+                saveEnabledCampaigns(next);
                 return next;
               });
             }}

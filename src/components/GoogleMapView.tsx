@@ -12,19 +12,14 @@ type Props = {
   onSelect: (id: string) => void;
   /** Increment only when the camera should jump (first lock, typed address, Use GPS). */
   focusToken?: number;
+  onReturnToLocation?: () => void;
 };
 
-function YouAreHerePin() {
+function BlueDot({ title }: { title?: string }) {
   return (
-    <div className="you-pin" title="You are here">
+    <div className="you-pin" title={title}>
       <span className="you-pin-pulse" />
-      <span className="you-pin-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="22" height="22">
-          <circle cx="12" cy="12" r="11" fill="#1a73e8" />
-          <circle cx="12" cy="8" r="2.4" fill="#fff" />
-          <path d="M7.5 18.2c.6-3 2.4-4.6 4.5-4.6s3.9 1.6 4.5 4.6" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-      </span>
+      <span className="you-pin-dot" aria-hidden="true" />
     </div>
   );
 }
@@ -40,7 +35,14 @@ function Recenter({ target, token }: { target: Gps | null; token: number }) {
   return null;
 }
 
-export function GoogleMapView({ gps, locations, selectedId, onSelect, focusToken = 0 }: Props) {
+export function GoogleMapView({
+  gps,
+  locations,
+  selectedId,
+  onSelect,
+  focusToken = 0,
+  onReturnToLocation,
+}: Props) {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
   const home = useRef(gps ?? SG_CENTER);
   const youTitle = gps?.label || "You are here";
@@ -74,13 +76,14 @@ export function GoogleMapView({ gps, locations, selectedId, onSelect, focusToken
           defaultZoom={gps ? 15 : 11}
           gestureHandling="greedy"
           disableDefaultUI={false}
+          streetViewControl={false}
           mapId="DEMO_MAP_ID"
           style={{ width: "100%", height: "100%" }}
         >
           <Recenter target={gps} token={focusToken} />
           {gps && (
             <AdvancedMarker position={gps} title={youTitle} zIndex={3000}>
-              <YouAreHerePin />
+              <BlueDot title={youTitle} />
             </AdvancedMarker>
           )}
           {locations.filter(hasCoords).map((loc) => {
@@ -104,6 +107,17 @@ export function GoogleMapView({ gps, locations, selectedId, onSelect, focusToken
           })}
         </Map>
       </APIProvider>
+      {onReturnToLocation && (
+        <button
+          type="button"
+          className="map-locate"
+          aria-label="Return to current location"
+          title="Return to current location"
+          onClick={onReturnToLocation}
+        >
+          <BlueDot />
+        </button>
+      )}
     </div>
   );
 }

@@ -32,7 +32,7 @@ export function App() {
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/terms" element={<TermsPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin400326" element={<AdminPage />} />
           <Route path="/cloud" element={<CloudPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
